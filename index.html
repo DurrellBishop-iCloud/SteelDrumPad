@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Steel Drum Pad</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a3a2e 0%, #0d2818 100%);
+            min-height: 100vh;
+            color: white;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .version {
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .status.ready {
+            background: rgba(46, 213, 115, 0.2);
+            color: #2ed573;
+        }
+
+        .status.waiting {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .status.loading {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+
+        .tap-to-start {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        .tap-to-start:active {
+            transform: scale(0.98);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .tap-to-start.hidden {
+            display: none;
+        }
+
+        .pads-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            flex: 1;
+            padding: 10px 0;
+        }
+
+        .pad {
+            aspect-ratio: 1;
+            background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #888;
+            transition: all 0.05s ease;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: inset 0 -5px 15px rgba(0,0,0,0.4), 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .pad.active {
+            transform: scale(0.95);
+            background: linear-gradient(145deg, #5a5a5a, #4a4a4a);
+            border-color: #ffd700;
+            box-shadow: inset 0 -2px 10px rgba(0,0,0,0.3), 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+
+        .pad .key {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .pad .label {
+            font-size: 0.8rem;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        .last-key {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-top: auto;
+        }
+
+        .last-key span {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        /* Caribbean colors for each pad */
+        .pad[data-key="a"].active { border-color: #ff6b6b; box-shadow: inset 0 -2px 10px rgba(0,0,0,0.3), 0 0 30px rgba(255, 107, 107, 0.6); }
+        .pad[data-key="b"].active { border-color: #ffd93d; box-shadow: inset 0 -2px 10px rgba(0,0,0,0.3), 0 0 30px rgba(255, 217, 61, 0.6); }
+        .pad[data-key="c"].active { border-color: #6bcb77; box-shadow: inset 0 -2px 10px rgba(0,0,0,0.3), 0 0 30px rgba(107, 203, 119, 0.6); }
+        .pad[data-key="d"].active { border-color: #4d96ff; box-shadow: inset 0 -2px 10px rgba(0,0,0,0.3), 0 0 30px rgba(77, 150, 255, 0.6); }
+        .pad[data-key="e"].active { border-color: #ff6fff; box-shadow: inset 0 -2px 10px rgba(0,0,0,0.3), 0 0 30px rgba(255, 111, 255, 0.6); }
+
+        @media (max-width: 400px) {
+            .pad .key {
+                font-size: 2rem;
+            }
+            .pads-container {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Steel Drum Pad</h1>
+            <div class="version">v2.0.0</div>
+        </header>
+
+        <div id="status" class="status waiting">
+            Tap to start
+        </div>
+
+        <div id="tapToStart" class="tap-to-start">
+            <div style="font-size: 3rem; margin-bottom: 10px;">🥁</div>
+            <div style="font-size: 1.2rem; font-weight: 500;">Tap to Start Steel Drums</div>
+            <div style="font-size: 0.9rem; opacity: 0.7; margin-top: 10px;">
+                Required for Safari/iOS
+            </div>
+        </div>
+
+        <div class="pads-container">
+            <div class="pad" data-key="a">
+                <div class="key">A</div>
+                <div class="label">D4</div>
+            </div>
+            <div class="pad" data-key="b">
+                <div class="key">B</div>
+                <div class="label">E4</div>
+            </div>
+            <div class="pad" data-key="c">
+                <div class="key">C</div>
+                <div class="label">G4</div>
+            </div>
+            <div class="pad" data-key="d">
+                <div class="key">D</div>
+                <div class="label">A4</div>
+            </div>
+            <div class="pad" data-key="e">
+                <div class="key">E</div>
+                <div class="label">C5</div>
+            </div>
+        </div>
+
+        <div class="last-key">
+            Last key: <span id="lastKey">-</span>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // Steel Drum Pad - Real Samples Version
+        // Version: 2.0.0
+        // ============================================
+
+        const VERSION = '2.0.0';
+        
+        let audioCtx = null;
+        let audioBuffers = {};
+        let isAudioReady = false;
+        let samplesLoaded = false;
+
+        // Sample file configuration
+        // Put your .wav or .mp3 files in a 'samples' folder
+        const SAMPLES = {
+            'a': 'samples/steel-d4.wav',
+            'b': 'samples/steel-e4.wav',
+            'c': 'samples/steel-g4.wav',
+            'd': 'samples/steel-a4.wav',
+            'e': 'samples/steel-c5.wav',
+        };
+
+        // DOM elements
+        const statusEl = document.getElementById('status');
+        const tapToStartEl = document.getElementById('tapToStart');
+        const lastKeyEl = document.getElementById('lastKey');
+        const pads = document.querySelectorAll('.pad');
+
+        // ============================================
+        // Audio Initialization
+        // ============================================
+
+        async function initAudio() {
+            if (audioCtx) {
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+                return;
+            }
+
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            tapToStartEl.classList.add('hidden');
+            
+            // Generate fallback sounds immediately so it works
+            generateFallbackSounds();
+            isAudioReady = true;
+            
+            statusEl.textContent = 'Loading samples...';
+            statusEl.className = 'status loading';
+
+            // Try to load real samples (async, won't block)
+            try {
+                const loadResults = await loadSamples();
+                
+                if (loadResults.loaded > 0) {
+                    statusEl.textContent = `Ready! ${loadResults.loaded} samples loaded`;
+                    samplesLoaded = true;
+                } else {
+                    statusEl.textContent = 'Ready (using fallback sounds)';
+                }
+            } catch (err) {
+                statusEl.textContent = 'Ready (using fallback sounds)';
+            }
+            
+            statusEl.className = 'status ready';
+            console.log('Audio initialized');
+        }
+
+        async function loadSamples() {
+            let loaded = 0;
+            let failed = 0;
+
+            for (const [key, url] of Object.entries(SAMPLES)) {
+                try {
+                    // Add timeout to prevent hanging
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    
+                    const response = await fetch(url, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    const arrayBuffer = await response.arrayBuffer();
+                    audioBuffers[key] = await audioCtx.decodeAudioData(arrayBuffer);
+                    loaded++;
+                    console.log(`Loaded: ${url}`);
+                } catch (err) {
+                    console.log(`Sample not found: ${url}`);
+                    failed++;
+                }
+            }
+
+            return { loaded, failed };
+        }
+
+        // Fallback: simple tones if no samples
+        function generateFallbackSounds() {
+            const notes = {
+                'a': 293.66,  // D4
+                'b': 329.63,  // E4
+                'c': 392.00,  // G4
+                'd': 440.00,  // A4
+                'e': 523.25,  // C5
+            };
+
+            for (const [key, freq] of Object.entries(notes)) {
+                if (!audioBuffers[key]) {
+                    audioBuffers[key] = createSimpleTone(freq, 0.8);
+                }
+            }
+            console.log('Fallback tones generated');
+        }
+
+        function createSimpleTone(frequency, duration) {
+            const sampleRate = audioCtx.sampleRate;
+            const length = sampleRate * duration;
+            const buffer = audioCtx.createBuffer(1, length, sampleRate);
+            const data = buffer.getChannelData(0);
+
+            for (let i = 0; i < length; i++) {
+                const t = i / sampleRate;
+                const env = Math.exp(-t * 3);
+                data[i] = env * 0.5 * Math.sin(2 * Math.PI * frequency * t);
+            }
+            return buffer;
+        }
+
+        // ============================================
+        // Sound Playback
+        // ============================================
+
+        function playSound(key) {
+            if (!isAudioReady || !audioBuffers[key]) return;
+
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffers[key];
+            source.connect(audioCtx.destination);
+            source.start(0);
+        }
+
+        // ============================================
+        // Visual Feedback
+        // ============================================
+
+        function activatePad(key) {
+            const pad = document.querySelector(`.pad[data-key="${key}"]`);
+            if (pad) {
+                pad.classList.add('active');
+                lastKeyEl.textContent = key.toUpperCase();
+            }
+        }
+
+        function deactivatePad(key) {
+            const pad = document.querySelector(`.pad[data-key="${key}"]`);
+            if (pad) {
+                pad.classList.remove('active');
+            }
+        }
+
+        // ============================================
+        // Event Handlers
+        // ============================================
+
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            
+            if (!audioCtx) initAudio();
+
+            if (SAMPLES[key]) {
+                e.preventDefault();
+                playSound(key);
+                activatePad(key);
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            if (SAMPLES[key]) {
+                deactivatePad(key);
+            }
+        });
+
+        tapToStartEl.addEventListener('click', initAudio);
+        tapToStartEl.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            initAudio();
+        });
+
+        document.addEventListener('touchstart', () => {
+            if (!audioCtx) initAudio();
+        }, { once: true });
+
+        pads.forEach(pad => {
+            const key = pad.dataset.key;
+
+            pad.addEventListener('mousedown', () => {
+                if (!audioCtx) initAudio();
+                playSound(key);
+                activatePad(key);
+            });
+            pad.addEventListener('mouseup', () => deactivatePad(key));
+            pad.addEventListener('mouseleave', () => deactivatePad(key));
+
+            pad.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (!audioCtx) initAudio();
+                playSound(key);
+                activatePad(key);
+            });
+            pad.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                deactivatePad(key);
+            });
+        });
+
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        console.log(`Steel Drum Pad v${VERSION}`);
+        console.log('Place WAV samples in: samples/steel-d4.wav, steel-e4.wav, etc.');
+    </script>
+</body>
+</html>
