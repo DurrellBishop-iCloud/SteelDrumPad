@@ -3,51 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Steel Drum Pad v3.1.0</title>
+  <title>Steel Drum Pad v3.2.0</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: radial-gradient(circle at center, #2a2a4a 0%, #0d0d1a 100%);
+      background: #111;
       color: #fff;
-      min-height: 100vh;
+      height: 100vh;
       overflow: hidden;
       touch-action: manipulation;
     }
 
     .header {
       text-align: center;
-      padding: 8px 0 4px;
+      padding: 4px 0 2px;
     }
-    .header h1 { font-size: 18px; }
-    .version { font-size: 10px; opacity: 0.4; }
+    .header h1 { font-size: 16px; }
+    .version { font-size: 9px; opacity: 0.3; }
 
     .status {
       text-align: center;
-      padding: 6px;
-      font-size: 12px;
-      background: #2a2a4a;
+      padding: 4px;
+      font-size: 11px;
+      background: #222;
     }
     .status.connected { background: #1b4332; }
 
     .pan-container {
       position: relative;
-      width: 100vmin;
-      height: 100vmin;
+      width: 96vmin;
+      height: 96vmin;
       max-width: 500px;
       max-height: 500px;
-      margin: 5px auto;
+      margin: 2px auto;
     }
 
-    /* Chrome ring */
     .pan-rim {
       position: absolute;
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      background: radial-gradient(circle, #333 0%, #1a1a1a 60%, #444 62%, #222 65%, #1a1a1a 100%);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.3);
+      background: radial-gradient(circle, #2a2a2a 0%, #1a1a1a 55%, #333 57%, #222 60%, #1a1a1a 100%);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.8), inset 0 0 40px rgba(0,0,0,0.4);
     }
 
     .pad {
@@ -60,120 +59,128 @@
       font-weight: bold;
       cursor: pointer;
       user-select: none;
-      transition: transform 0.08s, box-shadow 0.08s;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      transition: transform 0.06s, filter 0.06s;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
       z-index: 2;
+      border: 1.5px solid rgba(255,255,255,0.12);
     }
 
-    .pad:active, .pad.hit {
-      transform: scale(0.93);
-    }
+    .pad:active, .pad.hit { transform: translate(-50%,-50%) scale(0.90); }
     .pad.hit {
-      box-shadow: 0 0 20px 5px currentColor !important;
-      filter: brightness(1.3);
+      filter: brightness(1.5);
+      box-shadow: 0 0 15px 4px currentColor !important;
     }
+    .pad { transform: translate(-50%,-50%); }
 
-    .pad .note-name { font-size: 13px; line-height: 1.1; }
-    .pad .key-label { font-size: 8px; opacity: 0.5; }
+    .pad .note-name { font-size: 12px; line-height: 1; }
+    .pad .key-label { font-size: 7px; opacity: 0.4; margin-top: 1px; }
 
-    /* Outer ring pads - warm metallic */
+    /* Outer ring */
     .pad-outer {
-      width: 18%;
-      height: 18%;
-      background: linear-gradient(145deg, #c0392b, #922b21);
-      border: 2px solid rgba(255,255,255,0.15);
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.3);
-      color: #fff;
+      width: 17%;
+      height: 17%;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), 0 2px 6px rgba(0,0,0,0.4);
     }
 
-    /* Inner ring pads - cool metallic */
+    /* Inner ring */
     .pad-inner {
-      width: 14%;
-      height: 14%;
-      background: linear-gradient(145deg, #1abc9c, #16a085);
-      border: 2px solid rgba(255,255,255,0.15);
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.3);
-      color: #fff;
-      font-size: 11px;
+      width: 13%;
+      height: 13%;
+      box-shadow: inset 0 1px 3px rgba(255,255,255,0.08), 0 2px 4px rgba(0,0,0,0.4);
     }
-    .pad-inner .note-name { font-size: 11px; }
+    .pad-inner .note-name { font-size: 10px; }
 
-    /* Innermost pads - silver */
+    /* Innermost */
     .pad-innermost {
-      width: 12%;
-      height: 12%;
-      background: linear-gradient(145deg, #8e44ad, #6c3483);
-      border: 2px solid rgba(255,255,255,0.15);
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.3);
-      color: #fff;
-      font-size: 10px;
+      width: 11%;
+      height: 11%;
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.1), 0 1px 4px rgba(0,0,0,0.4);
     }
-    .pad-innermost .note-name { font-size: 10px; }
+    .pad-innermost .note-name { font-size: 9px; }
 
     .log {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(13,13,26,0.9);
-      padding: 4px 10px;
+      background: rgba(0,0,0,0.85);
+      padding: 3px 8px;
       font-family: monospace;
       font-size: 10px;
-      max-height: 60px;
-      overflow-y: auto;
+      max-height: 40px;
+      overflow: hidden;
       z-index: 10;
     }
-    .log-entry { padding: 1px 0; opacity: 0.7; }
   </style>
 </head>
 <body>
   <div class="header">
     <h1>Tenor Pan</h1>
-    <div class="version">v3.1.0</div>
+    <div class="version">v3.2.0</div>
   </div>
-
   <div class="status" id="status">Tap to start audio</div>
-
   <div class="pan-container" id="pan"></div>
-
   <div class="log" id="log"></div>
 
   <script>
-    // Tenor pan notes - key mapping matches firmware (1-9, a-t)
+    // Tenor pan notes - firmware keys 1-9, a-t
+    // Note order: circle of fifths C G D A E B F# C# G# Eb Bb F
     const NOTES = [
-      // Outer ring (12) - circle of fifths
-      { key:'1', name:'C4',  freq:261.63, ring:'outer' },
-      { key:'2', name:'G4',  freq:392.00, ring:'outer' },
-      { key:'3', name:'D5',  freq:587.33, ring:'outer' },
-      { key:'4', name:'A4',  freq:440.00, ring:'outer' },
-      { key:'5', name:'E5',  freq:659.25, ring:'outer' },
-      { key:'6', name:'B4',  freq:493.88, ring:'outer' },
-      { key:'7', name:'F#5', freq:739.99, ring:'outer' },
-      { key:'8', name:'C#5', freq:554.37, ring:'outer' },
-      { key:'9', name:'G#4', freq:415.30, ring:'outer' },
-      { key:'a', name:'Eb5', freq:622.25, ring:'outer' },
-      { key:'b', name:'Bb4', freq:466.16, ring:'outer' },
-      { key:'c', name:'F5',  freq:698.46, ring:'outer' },
-      // Inner ring (12)
-      { key:'d', name:'C5',  freq:523.25, ring:'inner' },
-      { key:'e', name:'G5',  freq:783.99, ring:'inner' },
-      { key:'f', name:'D6',  freq:1174.66, ring:'inner' },
-      { key:'g', name:'A5',  freq:880.00, ring:'inner' },
-      { key:'h', name:'E6',  freq:1318.51, ring:'inner' },
-      { key:'i', name:'B5',  freq:987.77, ring:'inner' },
-      { key:'j', name:'F#6', freq:1479.98, ring:'inner' },
-      { key:'k', name:'C#6', freq:1108.73, ring:'inner' },
-      { key:'l', name:'G#5', freq:830.61, ring:'inner' },
-      { key:'m', name:'Eb6', freq:1244.51, ring:'inner' },
-      { key:'n', name:'Bb5', freq:932.33, ring:'inner' },
-      { key:'o', name:'F6',  freq:1396.91, ring:'inner' },
-      // Innermost (5)
-      { key:'p', name:'C6',  freq:1046.50, ring:'innermost' },
-      { key:'q', name:'D6',  freq:1174.66, ring:'innermost' },
-      { key:'r', name:'E6',  freq:1318.51, ring:'innermost' },
-      { key:'s', name:'C#6', freq:1108.73, ring:'innermost' },
-      { key:'t', name:'Eb6', freq:1244.51, ring:'innermost' },
+      // Outer ring (0-11)
+      { key:'1', name:'C4',  freq:261.63, ring:'outer',     angle:180 },
+      { key:'2', name:'G4',  freq:392.00, ring:'outer',     angle:150 },
+      { key:'3', name:'D5',  freq:587.33, ring:'outer',     angle:120 },
+      { key:'4', name:'A4',  freq:440.00, ring:'outer',     angle:90  },
+      { key:'5', name:'E5',  freq:659.25, ring:'outer',     angle:60  },
+      { key:'6', name:'B4',  freq:493.88, ring:'outer',     angle:30  },
+      { key:'7', name:'F#5', freq:739.99, ring:'outer',     angle:0   },
+      { key:'8', name:'C#5', freq:554.37, ring:'outer',     angle:330 },
+      { key:'9', name:'G#4', freq:415.30, ring:'outer',     angle:300 },
+      { key:'a', name:'Eb5', freq:622.25, ring:'outer',     angle:270 },
+      { key:'b', name:'Bb4', freq:466.16, ring:'outer',     angle:240 },
+      { key:'c', name:'F5',  freq:698.46, ring:'outer',     angle:210 },
+      // Inner ring (12-23) - same angles as outer
+      { key:'d', name:'C5',  freq:523.25, ring:'inner',     angle:180 },
+      { key:'e', name:'G5',  freq:783.99, ring:'inner',     angle:150 },
+      { key:'f', name:'D6',  freq:1174.66, ring:'inner',    angle:120 },
+      { key:'g', name:'A5',  freq:880.00, ring:'inner',     angle:90  },
+      { key:'h', name:'E6',  freq:1318.51, ring:'inner',    angle:60  },
+      { key:'i', name:'B5',  freq:987.77, ring:'inner',     angle:30  },
+      { key:'j', name:'F#6', freq:1479.98, ring:'inner',    angle:0   },
+      { key:'k', name:'C#6', freq:1108.73, ring:'inner',    angle:330 },
+      { key:'l', name:'G#5', freq:830.61, ring:'inner',     angle:300 },
+      { key:'m', name:'Eb6', freq:1244.51, ring:'inner',    angle:270 },
+      { key:'n', name:'Bb5', freq:932.33, ring:'inner',     angle:240 },
+      { key:'o', name:'F6',  freq:1396.91, ring:'inner',    angle:210 },
+      // Innermost (24-28) - radiate from their outer counterparts
+      { key:'p', name:'C6',  freq:1046.50, ring:'innermost', angle:180 },  // lines up with C
+      { key:'q', name:'D6',  freq:1174.66, ring:'innermost', angle:120 },  // lines up with D
+      { key:'r', name:'E6',  freq:1318.51, ring:'innermost', angle:60  },  // lines up with E
+      { key:'s', name:'C#6', freq:1108.73, ring:'innermost', angle:330 },  // lines up with C#
+      { key:'t', name:'Eb6', freq:1244.51, ring:'innermost', angle:270 },  // lines up with Eb
     ];
+
+    // Color families - notes that radiate inward share a color
+    // Based on the 5 innermost notes: C, D, E, C#, Eb
+    const COLOR_FAMILIES = {
+      // C family (C, G, F) - yellow/gold
+      180: { outer: '#c49102', inner: '#a07800', innermost: '#d4a017' },
+      150: { outer: '#c49102', inner: '#a07800' },
+      210: { outer: '#c49102', inner: '#a07800' },
+      // D family (D, A, Bb) - green
+      120: { outer: '#2d8a4e', inner: '#1e6b38', innermost: '#3aad62' },
+       90: { outer: '#2d8a4e', inner: '#1e6b38' },
+      240: { outer: '#2d8a4e', inner: '#1e6b38' },
+      // E family (E, B, F#) - blue
+       60: { outer: '#2e6da4', inner: '#1e5080', innermost: '#3d8fd4' },
+       30: { outer: '#2e6da4', inner: '#1e5080' },
+        0: { outer: '#2e6da4', inner: '#1e5080' },
+      // C# family (C#, G#) - purple
+      330: { outer: '#7b4ea0', inner: '#5e3a7e', innermost: '#9966cc' },
+      300: { outer: '#7b4ea0', inner: '#5e3a7e' },
+      // Eb family (Eb) - red
+      270: { outer: '#b83a3a', inner: '#922b2b', innermost: '#d44' },
+    };
 
     let audioCtx = null;
     let audioBuffers = {};
@@ -181,48 +188,36 @@
     const statusEl = document.getElementById('status');
     const panEl = document.getElementById('pan');
 
-    // Position notes in circular layout like a real tenor pan
+    function getColor(angle, ring) {
+      const fam = COLOR_FAMILIES[angle];
+      if (fam && fam[ring]) return fam[ring];
+      return ring === 'outer' ? '#555' : ring === 'inner' ? '#444' : '#666';
+    }
+
     function buildPan() {
       const rim = document.createElement('div');
       rim.className = 'pan-rim';
       panEl.appendChild(rim);
 
-      // Outer ring: 12 notes at 42% radius
-      const outerR = 38;
-      // Inner ring: 12 notes at 25% radius
-      const innerR = 24;
-      // Innermost: 5 notes at 10% radius
-      const centreR = 10;
+      const radii = { outer: 40, inner: 26, innermost: 13 };
 
       NOTES.forEach((note, i) => {
         const pad = document.createElement('div');
-        let cls, angle, radius;
+        const r = radii[note.ring];
+        const a = note.angle * Math.PI / 180;
 
-        if (note.ring === 'outer') {
-          cls = 'pad-outer';
-          const idx = i;  // 0-11
-          angle = (idx * 30 - 90) * Math.PI / 180;  // start from top, 30deg apart
-          radius = outerR;
-        } else if (note.ring === 'inner') {
-          cls = 'pad-inner';
-          const idx = i - 12;  // 0-11
-          angle = (idx * 30 - 90 + 15) * Math.PI / 180;  // offset 15deg from outer
-          radius = innerR;
-        } else {
-          cls = 'pad-innermost';
-          const idx = i - 24;  // 0-4
-          angle = (idx * 72 - 90) * Math.PI / 180;  // 5 notes, 72deg apart
-          radius = centreR;
-        }
+        const x = 50 + r * Math.sin(a);
+        const y = 50 - r * Math.cos(a);
 
-        const x = 50 + radius * Math.cos(angle);
-        const y = 50 + radius * Math.sin(angle);
+        const cls = `pad-${note.ring}`;
+        const col = getColor(note.angle, note.ring);
 
         pad.className = `pad ${cls}`;
         pad.dataset.index = i;
         pad.style.left = `${x}%`;
         pad.style.top = `${y}%`;
-        pad.style.transform = 'translate(-50%, -50%)';
+        pad.style.background = `radial-gradient(circle at 35% 35%, ${col}, ${col}dd)`;
+        pad.style.color = '#fff';
 
         pad.innerHTML = `<div class="note-name">${note.name}</div><div class="key-label">${note.key}</div>`;
 
@@ -256,7 +251,6 @@
         NOTES.forEach(n => { audioBuffers[n.key] = generateSteelDrumBuffer(n.freq); });
         statusEl.textContent = 'Audio ready!';
         statusEl.classList.add('connected');
-        log('29 steel drum tones loaded');
       }
       if (audioCtx.state === 'suspended') audioCtx.resume();
     }
@@ -273,21 +267,12 @@
       const note = NOTES[index];
       if (!note) return;
       playNote(note.key);
-
       const pad = panEl.querySelector(`[data-index="${index}"]`);
       if (pad) {
         pad.classList.add('hit');
         setTimeout(() => pad.classList.remove('hit'), 150);
       }
-      log(`${note.name}`);
-    }
-
-    function log(msg) {
-      const entry = document.createElement('div');
-      entry.className = 'log-entry';
-      entry.textContent = msg;
-      logEl.insertBefore(entry, logEl.firstChild);
-      while (logEl.children.length > 20) logEl.removeChild(logEl.lastChild);
+      logEl.textContent = note.name;
     }
 
     const keyToIndex = {};
@@ -296,16 +281,13 @@
     document.addEventListener('keydown', (e) => {
       initAudio();
       const k = e.key.toLowerCase();
-      if (k in keyToIndex) {
-        e.preventDefault();
-        triggerPad(keyToIndex[k]);
-      }
+      if (k in keyToIndex) { e.preventDefault(); triggerPad(keyToIndex[k]); }
     });
 
     document.addEventListener('click', initAudio);
     document.addEventListener('touchstart', initAudio);
     buildPan();
-    log('Tap to start');
+    logEl.textContent = 'Tap to start';
   </script>
 </body>
 </html>
