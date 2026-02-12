@@ -1,435 +1,278 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Steel Drum Pad</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Steel Drum Pad v3.0.0</title>
+  <style>
+    * { box-sizing: border-box; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a3a2e 0%, #0d2818 100%);
-            min-height: 100vh;
-            color: white;
-            overflow: hidden;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+    h1 { text-align: center; margin-bottom: 5px; }
+    .version { text-align: center; opacity: 0.5; font-size: 12px; margin-bottom: 15px; }
 
-        header {
-            text-align: center;
-            padding: 20px 0;
-        }
+    .status {
+      text-align: center;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      background: #2a2a4a;
+    }
+    .status.connected { background: #1b4332; }
 
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 5px;
-        }
+    .ring-label {
+      max-width: 700px;
+      margin: 15px auto 5px;
+      font-size: 14px;
+      font-weight: bold;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
 
-        .version {
-            font-size: 0.8rem;
-            opacity: 0.6;
-        }
+    .ring {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 700px;
+      margin: 0 auto 10px;
+      justify-content: center;
+    }
 
-        .status {
-            text-align: center;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 10px;
-            font-weight: 500;
-        }
+    .pad {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+      user-select: none;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
 
-        .status.ready {
-            background: rgba(46, 213, 115, 0.2);
-            color: #2ed573;
-        }
+    .pad:active, .pad.hit {
+      transform: scale(0.92);
+    }
+    .pad.hit {
+      box-shadow: 0 0 25px currentColor;
+      border-color: currentColor;
+    }
 
-        .status.waiting {
-            background: rgba(255, 193, 7, 0.2);
-            color: #ffc107;
-        }
+    .pad .note { font-size: 10px; opacity: 0.7; }
+    .pad .key-label { font-size: 9px; opacity: 0.5; margin-top: 2px; }
 
-        .status.loading {
-            background: rgba(52, 152, 219, 0.2);
-            color: #3498db;
-        }
+    /* Outer ring - warm colors */
+    .ring-outer .pad { background: linear-gradient(145deg, #e63946, #9d0208); color: #fff; }
+    /* Inner ring - cool colors */
+    .ring-inner .pad { background: linear-gradient(145deg, #2a9d8f, #1b4332); color: #fff; }
+    /* Innermost ring - purple */
+    .ring-innermost .pad { background: linear-gradient(145deg, #9d4edd, #5a189a); color: #fff; }
 
-        .tap-to-start {
-            text-align: center;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            margin: 20px 0;
-            cursor: pointer;
-            transition: transform 0.1s, background 0.2s;
-        }
+    .instructions {
+      max-width: 700px;
+      margin: 20px auto;
+      padding: 15px;
+      background: #2a2a4a;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .instructions h3 { margin-top: 0; }
 
-        .tap-to-start:active {
-            transform: scale(0.98);
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .tap-to-start.hidden {
-            display: none;
-        }
-
-        .pads-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            flex: 1;
-            padding: 10px 0;
-        }
-
-        .pad {
-            aspect-ratio: 1;
-            background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid #888;
-            transition: all 0.05s ease;
-            cursor: pointer;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            box-shadow: inset 0 -5px 15px rgba(0,0,0,0.4), 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-        .pad.active {
-            transform: scale(0.95);
-            background: linear-gradient(145deg, #5a5a5a, #4a4a4a);
-            border-color: #ffd700;
-            box-shadow: inset 0 -2px 10px rgba(0,0,0,0.3), 0 0 30px rgba(255, 215, 0, 0.5);
-        }
-
-        .pad .key {
-            font-size: 2.5rem;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .pad .label {
-            font-size: 0.8rem;
-            opacity: 0.6;
-            margin-top: 5px;
-        }
-
-        .last-key {
-            text-align: center;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            margin-top: auto;
-        }
-
-        .last-key span {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #ffd700;
-        }
-
-        /* Caribbean colors for each pad */
-        .pad[data-key="a"].active { border-color: #ff6b6b; box-shadow: inset 0 -2px 10px rgba(0,0,0,0.3), 0 0 30px rgba(255, 107, 107, 0.6); }
-        .pad[data-key="b"].active { border-color: #ffd93d; box-shadow: inset 0 -2px 10px rgba(0,0,0,0.3), 0 0 30px rgba(255, 217, 61, 0.6); }
-        .pad[data-key="c"].active { border-color: #6bcb77; box-shadow: inset 0 -2px 10px rgba(0,0,0,0.3), 0 0 30px rgba(107, 203, 119, 0.6); }
-        .pad[data-key="d"].active { border-color: #4d96ff; box-shadow: inset 0 -2px 10px rgba(0,0,0,0.3), 0 0 30px rgba(77, 150, 255, 0.6); }
-        .pad[data-key="e"].active { border-color: #ff6fff; box-shadow: inset 0 -2px 10px rgba(0,0,0,0.3), 0 0 30px rgba(255, 111, 255, 0.6); }
-
-        @media (max-width: 400px) {
-            .pad .key {
-                font-size: 2rem;
-            }
-            .pads-container {
-                gap: 10px;
-            }
-        }
-    </style>
+    .log {
+      max-width: 700px;
+      margin: 10px auto 0;
+      background: #0d0d1a;
+      border-radius: 8px;
+      padding: 15px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 11px;
+    }
+    .log-entry {
+      padding: 2px 0;
+      border-bottom: 1px solid #2a2a4a;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Steel Drum Pad</h1>
-            <div class="version">v2.0.0</div>
-        </header>
+  <h1>Steel Drum Pad</h1>
+  <div class="version">v3.0.0 - Tenor Pan (29 notes)</div>
 
-        <div id="status" class="status waiting">
-            Tap to start
-        </div>
+  <div class="status" id="status">
+    Click anywhere to enable audio, then connect your ESP32 BLE keyboard
+  </div>
 
-        <div id="tapToStart" class="tap-to-start">
-            <div style="font-size: 3rem; margin-bottom: 10px;">🥁</div>
-            <div style="font-size: 1.2rem; font-weight: 500;">Tap to Start Steel Drums</div>
-            <div style="font-size: 0.9rem; opacity: 0.7; margin-top: 10px;">
-                Required for Safari/iOS
-            </div>
-        </div>
+  <div class="ring-label">Outer Ring</div>
+  <div class="ring ring-outer" id="ring-outer"></div>
 
-        <div class="pads-container">
-            <div class="pad" data-key="a">
-                <div class="key">A</div>
-                <div class="label">D4</div>
-            </div>
-            <div class="pad" data-key="b">
-                <div class="key">B</div>
-                <div class="label">E4</div>
-            </div>
-            <div class="pad" data-key="c">
-                <div class="key">C</div>
-                <div class="label">G4</div>
-            </div>
-            <div class="pad" data-key="d">
-                <div class="key">D</div>
-                <div class="label">A4</div>
-            </div>
-            <div class="pad" data-key="e">
-                <div class="key">E</div>
-                <div class="label">C5</div>
-            </div>
-        </div>
+  <div class="ring-label">Inner Ring</div>
+  <div class="ring ring-inner" id="ring-inner"></div>
 
-        <div class="last-key">
-            Last key: <span id="lastKey">-</span>
-        </div>
-    </div>
+  <div class="ring-label">Innermost</div>
+  <div class="ring ring-innermost" id="ring-innermost"></div>
 
-    <script>
-        // ============================================
-        // Steel Drum Pad - Real Samples Version
-        // Version: 2.0.0
-        // ============================================
+  <div class="instructions">
+    <h3>Tenor Pan - 29 Notes</h3>
+    <p>Pair ESP32 "SteelPan" via Bluetooth, click page to enable audio, then play!</p>
+    <p>Keys: <b>1-9</b> (outer), <b>a-l</b> (inner), <b>m-t</b> (innermost + remaining)</p>
+  </div>
 
-        const VERSION = '2.0.0';
-        
-        let audioCtx = null;
-        let audioBuffers = {};
-        let isAudioReady = false;
-        let samplesLoaded = false;
+  <div style="max-width:700px;margin:10px auto;text-align:right;">
+    <button onclick="document.getElementById('log').innerHTML='';log('Cleared');"
+      style="padding:6px 12px;border-radius:6px;border:none;background:#457b9d;color:white;cursor:pointer;">Clear Log</button>
+  </div>
+  <div class="log" id="log"></div>
 
-        // Sample file configuration
-        // Put your .wav or .mp3 files in a 'samples' folder
-        const SAMPLES = {
-            'a': 'samples/steel-d4.wav',
-            'b': 'samples/steel-e4.wav',
-            'c': 'samples/steel-g4.wav',
-            'd': 'samples/steel-a4.wav',
-            'e': 'samples/steel-c5.wav',
-        };
+  <script>
+    // 29 tenor pan notes with keyboard key, note name, and frequency
+    // Key mapping matches firmware: 1-9 then a-t
+    const NOTES = [
+      // Outer ring (keys 1-9, a-c)
+      { key: '1', name: 'C4',  freq: 261.63, ring: 'outer' },
+      { key: '2', name: 'G4',  freq: 392.00, ring: 'outer' },
+      { key: '3', name: 'D5',  freq: 587.33, ring: 'outer' },
+      { key: '4', name: 'A4',  freq: 440.00, ring: 'outer' },
+      { key: '5', name: 'E5',  freq: 659.25, ring: 'outer' },
+      { key: '6', name: 'B4',  freq: 493.88, ring: 'outer' },
+      { key: '7', name: 'F#5', freq: 739.99, ring: 'outer' },
+      { key: '8', name: 'C#5', freq: 554.37, ring: 'outer' },
+      { key: '9', name: 'G#4', freq: 415.30, ring: 'outer' },
+      { key: 'a', name: 'Eb5', freq: 622.25, ring: 'outer' },
+      { key: 'b', name: 'Bb4', freq: 466.16, ring: 'outer' },
+      { key: 'c', name: 'F5',  freq: 698.46, ring: 'outer' },
 
-        // DOM elements
-        const statusEl = document.getElementById('status');
-        const tapToStartEl = document.getElementById('tapToStart');
-        const lastKeyEl = document.getElementById('lastKey');
-        const pads = document.querySelectorAll('.pad');
+      // Inner ring (keys d-o)
+      { key: 'd', name: 'C5',  freq: 523.25, ring: 'inner' },
+      { key: 'e', name: 'G5',  freq: 783.99, ring: 'inner' },
+      { key: 'f', name: 'D6',  freq: 1174.66, ring: 'inner' },
+      { key: 'g', name: 'A5',  freq: 880.00, ring: 'inner' },
+      { key: 'h', name: 'E6',  freq: 1318.51, ring: 'inner' },
+      { key: 'i', name: 'B5',  freq: 987.77, ring: 'inner' },
+      { key: 'j', name: 'F#6', freq: 1479.98, ring: 'inner' },
+      { key: 'k', name: 'C#6', freq: 1108.73, ring: 'inner' },
+      { key: 'l', name: 'G#5', freq: 830.61, ring: 'inner' },
+      { key: 'm', name: 'Eb6', freq: 1244.51, ring: 'inner' },
+      { key: 'n', name: 'Bb5', freq: 932.33, ring: 'inner' },
+      { key: 'o', name: 'F6',  freq: 1396.91, ring: 'inner' },
 
-        // ============================================
-        // Audio Initialization
-        // ============================================
+      // Innermost (keys p-t)
+      { key: 'p', name: 'C6',  freq: 1046.50, ring: 'innermost' },
+      { key: 'q', name: 'D6',  freq: 1174.66, ring: 'innermost' },
+      { key: 'r', name: 'E6',  freq: 1318.51, ring: 'innermost' },
+      { key: 's', name: 'C#6', freq: 1108.73, ring: 'innermost' },
+      { key: 't', name: 'Eb6', freq: 1244.51, ring: 'innermost' },
+    ];
 
-        async function initAudio() {
-            if (audioCtx) {
-                if (audioCtx.state === 'suspended') {
-                    await audioCtx.resume();
-                }
-                return;
-            }
+    let audioCtx = null;
+    let audioBuffers = {};
 
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            tapToStartEl.classList.add('hidden');
-            
-            // Generate fallback sounds immediately so it works
-            generateFallbackSounds();
-            isAudioReady = true;
-            
-            statusEl.textContent = 'Loading samples...';
-            statusEl.className = 'status loading';
+    const logEl = document.getElementById('log');
+    const statusEl = document.getElementById('status');
 
-            // Try to load real samples (async, won't block)
-            try {
-                const loadResults = await loadSamples();
-                
-                if (loadResults.loaded > 0) {
-                    statusEl.textContent = `Ready! ${loadResults.loaded} samples loaded`;
-                    samplesLoaded = true;
-                } else {
-                    statusEl.textContent = 'Ready (using fallback sounds)';
-                }
-            } catch (err) {
-                statusEl.textContent = 'Ready (using fallback sounds)';
-            }
-            
-            statusEl.className = 'status ready';
-            console.log('Audio initialized');
-        }
+    // Build pad elements
+    function buildPads() {
+      const rings = { outer: 'ring-outer', inner: 'ring-inner', innermost: 'ring-innermost' };
+      NOTES.forEach((note, i) => {
+        const container = document.getElementById(rings[note.ring]);
+        const pad = document.createElement('div');
+        pad.className = 'pad';
+        pad.dataset.index = i;
+        pad.innerHTML = `<div>${note.name}</div><div class="key-label">[${note.key}]</div>`;
+        pad.addEventListener('mousedown', () => { initAudio(); triggerPad(i); });
+        pad.addEventListener('touchstart', (e) => { e.preventDefault(); initAudio(); triggerPad(i); });
+        container.appendChild(pad);
+      });
+    }
 
-        async function loadSamples() {
-            let loaded = 0;
-            let failed = 0;
+    // Generate steel drum sound
+    function generateSteelDrumBuffer(freq, duration = 1.2) {
+      const sr = audioCtx.sampleRate;
+      const len = sr * duration;
+      const buf = audioCtx.createBuffer(1, len, sr);
+      const data = buf.getChannelData(0);
 
-            for (const [key, url] of Object.entries(SAMPLES)) {
-                try {
-                    // Add timeout to prevent hanging
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 3000);
-                    
-                    const response = await fetch(url, { signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    
-                    const arrayBuffer = await response.arrayBuffer();
-                    audioBuffers[key] = await audioCtx.decodeAudioData(arrayBuffer);
-                    loaded++;
-                    console.log(`Loaded: ${url}`);
-                } catch (err) {
-                    console.log(`Sample not found: ${url}`);
-                    failed++;
-                }
-            }
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const env = Math.exp(-t * 5) * 0.7 + Math.exp(-t * 15) * 0.3;
+        const fundamental = Math.sin(2 * Math.PI * freq * t);
+        const oct = Math.sin(2 * Math.PI * freq * 2 * t) * 0.15;
+        const fifth = Math.sin(2 * Math.PI * freq * 3 * t) * 0.08;
+        const shimmer = Math.sin(2 * Math.PI * freq * 4.07 * t) * 0.05 * Math.exp(-t * 10);
+        data[i] = (fundamental + oct + fifth + shimmer) * env * 0.35;
+      }
+      return buf;
+    }
 
-            return { loaded, failed };
-        }
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
+        NOTES.forEach(n => { audioBuffers[n.key] = generateSteelDrumBuffer(n.freq); });
+        statusEl.textContent = 'Audio ready! 29 notes loaded.';
+        statusEl.classList.add('connected');
+        log('Audio initialized - 29 steel drum tones generated');
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
 
-        // Fallback: simple tones if no samples
-        function generateFallbackSounds() {
-            const notes = {
-                'a': 293.66,  // D4
-                'b': 329.63,  // E4
-                'c': 392.00,  // G4
-                'd': 440.00,  // A4
-                'e': 523.25,  // C5
-            };
+    function playNote(key) {
+      if (!audioCtx || !audioBuffers[key]) return;
+      const src = audioCtx.createBufferSource();
+      src.buffer = audioBuffers[key];
+      src.connect(audioCtx.destination);
+      src.start(0);
+    }
 
-            for (const [key, freq] of Object.entries(notes)) {
-                if (!audioBuffers[key]) {
-                    audioBuffers[key] = createSimpleTone(freq, 0.8);
-                }
-            }
-            console.log('Fallback tones generated');
-        }
+    function triggerPad(index) {
+      const note = NOTES[index];
+      if (!note) return;
+      playNote(note.key);
 
-        function createSimpleTone(frequency, duration) {
-            const sampleRate = audioCtx.sampleRate;
-            const length = sampleRate * duration;
-            const buffer = audioCtx.createBuffer(1, length, sampleRate);
-            const data = buffer.getChannelData(0);
+      const pad = document.querySelectorAll('.pad')[index];
+      if (pad) {
+        pad.classList.add('hit');
+        setTimeout(() => pad.classList.remove('hit'), 150);
+      }
+      log(`${note.name} [${note.key}]`);
+    }
 
-            for (let i = 0; i < length; i++) {
-                const t = i / sampleRate;
-                const env = Math.exp(-t * 3);
-                data[i] = env * 0.5 * Math.sin(2 * Math.PI * frequency * t);
-            }
-            return buffer;
-        }
+    function log(msg) {
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logEl.insertBefore(entry, logEl.firstChild);
+      while (logEl.children.length > 50) logEl.removeChild(logEl.lastChild);
+    }
 
-        // ============================================
-        // Sound Playback
-        // ============================================
+    // Key map for quick lookup
+    const keyToIndex = {};
+    NOTES.forEach((n, i) => { keyToIndex[n.key] = i; });
 
-        function playSound(key) {
-            if (!isAudioReady || !audioBuffers[key]) return;
+    document.addEventListener('keydown', (e) => {
+      initAudio();
+      const k = e.key.toLowerCase();
+      if (k in keyToIndex) {
+        e.preventDefault();
+        triggerPad(keyToIndex[k]);
+      }
+    });
 
-            const source = audioCtx.createBufferSource();
-            source.buffer = audioBuffers[key];
-            source.connect(audioCtx.destination);
-            source.start(0);
-        }
-
-        // ============================================
-        // Visual Feedback
-        // ============================================
-
-        function activatePad(key) {
-            const pad = document.querySelector(`.pad[data-key="${key}"]`);
-            if (pad) {
-                pad.classList.add('active');
-                lastKeyEl.textContent = key.toUpperCase();
-            }
-        }
-
-        function deactivatePad(key) {
-            const pad = document.querySelector(`.pad[data-key="${key}"]`);
-            if (pad) {
-                pad.classList.remove('active');
-            }
-        }
-
-        // ============================================
-        // Event Handlers
-        // ============================================
-
-        document.addEventListener('keydown', (e) => {
-            const key = e.key.toLowerCase();
-            
-            if (!audioCtx) initAudio();
-
-            if (SAMPLES[key]) {
-                e.preventDefault();
-                playSound(key);
-                activatePad(key);
-            }
-        });
-
-        document.addEventListener('keyup', (e) => {
-            const key = e.key.toLowerCase();
-            if (SAMPLES[key]) {
-                deactivatePad(key);
-            }
-        });
-
-        tapToStartEl.addEventListener('click', initAudio);
-        tapToStartEl.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            initAudio();
-        });
-
-        document.addEventListener('touchstart', () => {
-            if (!audioCtx) initAudio();
-        }, { once: true });
-
-        pads.forEach(pad => {
-            const key = pad.dataset.key;
-
-            pad.addEventListener('mousedown', () => {
-                if (!audioCtx) initAudio();
-                playSound(key);
-                activatePad(key);
-            });
-            pad.addEventListener('mouseup', () => deactivatePad(key));
-            pad.addEventListener('mouseleave', () => deactivatePad(key));
-
-            pad.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                if (!audioCtx) initAudio();
-                playSound(key);
-                activatePad(key);
-            });
-            pad.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                deactivatePad(key);
-            });
-        });
-
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-        console.log(`Steel Drum Pad v${VERSION}`);
-        console.log('Place WAV samples in: samples/steel-d4.wav, steel-e4.wav, etc.');
-    </script>
+    document.addEventListener('click', initAudio);
+    buildPads();
+    log('Tenor Pan ready - 29 notes. Pair BLE "SteelPan" and play!');
+  </script>
 </body>
 </html>
